@@ -93,6 +93,8 @@ class BochaWebCollector(BaseCollector):
     - 研报摘要
     - 行业动态
     - 公司公告
+
+    API文档: https://api.bocha.cn/v1/web-search
     """
 
     name = "bocha"
@@ -100,7 +102,7 @@ class BochaWebCollector(BaseCollector):
 
     def __init__(self):
         self.api_key = os.getenv("BOCHA_API_KEY", "")
-        self.api_base = os.getenv("BOCHA_API_BASE", "https://api.bocha.io/v1")
+        self.api_base = "https://api.bocha.cn/v1"
 
     def is_available(self) -> bool:
         """检查API Key是否配置"""
@@ -113,6 +115,9 @@ class BochaWebCollector(BaseCollector):
         Args:
             query: 搜索关键词（如 "格力电器 最新新闻"）
             data_type: 数据类型，可选值: news/report/announcement
+            count: 返回结果条数 (1-50，默认10)
+            freshness: 时间范围 (noLimit/oneDay/oneWeek/oneMonth/oneYear)
+            summary: 是否显示文本摘要 (True/False)
         """
         data_type = kwargs.get("data_type", "news")
 
@@ -127,17 +132,24 @@ class BochaWebCollector(BaseCollector):
         try:
             import aiohttp
 
-            # 构建请求
-            url = f"{self.api_base}/search"
+            # 构建请求 - 按照博查API文档格式
+            url = f"{self.api_base}/web-search"
             headers = {
                 "Authorization": f"Bearer {self.api_key}",
                 "Content-Type": "application/json"
             }
             payload = {
                 "query": query,
-                "search_type": "web",  # 网页搜索
-                "max_results": kwargs.get("max_results", 5)
+                "freshness": kwargs.get("freshness", "noLimit"),
+                "summary": kwargs.get("summary", True),
+                "count": kwargs.get("count", 10)
             }
+
+            # 可选：指定搜索范围
+            if kwargs.get("include"):
+                payload["include"] = kwargs.get("include")
+            if kwargs.get("exclude"):
+                payload["exclude"] = kwargs.get("exclude")
 
             logger.info(f"[博查] 搜索: {query}")
 
@@ -150,14 +162,16 @@ class BochaWebCollector(BaseCollector):
                             source=self.name,
                             data_type=data_type,
                             content=None,
-                            error=f"API错误: {resp.status}"
+                            error=f"API错误: {resp.status} - {error_text[:200]}"
                         )
 
                     result = await resp.json()
 
-            # 解析结果
-            results = result.get("results", [])
-            if not results:
+            # 解析结果 - 按照博查API响应格式
+            web_pages = result.get("webPages", {})
+            values = web_pages.get("value", [])
+
+            if not values:
                 return CollectedData(
                     source=self.name,
                     data_type=data_type,
@@ -167,18 +181,25 @@ class BochaWebCollector(BaseCollector):
 
             # 提取关键信息
             items = []
-            for item in results[:5]:
+            for item in values:
                 items.append({
-                    "title": item.get("title", ""),
+                    "title": item.get("name", ""),
                     "url": item.get("url", ""),
                     "snippet": item.get("snippet", ""),
-                    "source": item.get("source", "")
+                    "summary": item.get("summary", ""),  # 文本摘要
+                    "site_name": item.get("siteName", ""),
+                    "date_published": item.get("datePublished", ""),
+                    "display_url": item.get("displayUrl", "")
                 })
+
+            # 生成摘要文本
+            summary_text = self._summarize_results(items)
 
             content = {
                 "query": query,
+                "total_matches": web_pages.get("totalEstimatedMatches", len(items)),
                 "items": items,
-                "summary": self._summarize_results(items)
+                "summary": summary_text
             }
 
             logger.info(f"[博查] 采集成功: {len(items)}条")
@@ -187,7 +208,11 @@ class BochaWebCollector(BaseCollector):
                 source=self.name,
                 data_type=data_type,
                 content=content,
-                metadata={"query": query, "total_results": len(results)}
+                metadata={
+                    "query": query,
+                    "total_results": web_pages.get("totalEstimatedMatches", len(items)),
+                    "search_url": web_pages.get("webSearchUrl", "")
+                }
             )
 
         except asyncio.TimeoutError:
@@ -219,10 +244,16 @@ class BochaWebCollector(BaseCollector):
         if not items:
             return "无相关信息"
 
+        # 优先使用 summary 字段
+        summaries = [item.get("summary", "") for item in items if item.get("summary")]
+        if summaries:
+            return " | ".join(summaries[:3])
+
+        # 其次使用 snippet
         snippets = [item.get("snippet", "") for item in items if item.get("snippet")]
         if snippets:
-            # 简单拼接摘要
             return " | ".join(snippets[:3])
+
         return f"找到{len(items)}条相关信息"
 
 
