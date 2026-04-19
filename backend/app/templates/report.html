@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>投研会报告 - {{ meeting_id }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #ffffff;
+            color: #333;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+        }
+
+        .header .meta {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .topic-box {
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+
+        .topic-box h2 {
+            font-size: 18px;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+        }
+
+        .topic-box .topic-text {
+            font-size: 16px;
+            color: #333;
+        }
+
+        /* 手风琴卡片 */
+        .accordion {
+            margin-bottom: 20px;
+        }
+
+        .accordion-item {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: #fff;
+        }
+
+        .accordion-header {
+            padding: 15px 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8f9fa;
+            border-radius: 8px 8px 0 0;
+            transition: background 0.3s;
+        }
+
+        .accordion-header:hover {
+            background: #e9ecef;
+        }
+
+        .accordion-header h3 {
+            font-size: 16px;
+            color: #1a1a1a;
+        }
+
+        .accordion-header .phase-tag {
+            font-size: 12px;
+            color: #666;
+            background: #e0e0e0;
+            padding: 4px 10px;
+            border-radius: 4px;
+        }
+
+        .accordion-content {
+            padding: 20px;
+            display: none;
+        }
+
+        .accordion-item.active .accordion-content {
+            display: block;
+        }
+
+        .accordion-item.active .accordion-header .arrow {
+            transform: rotate(180deg);
+        }
+
+        .arrow {
+            transition: transform 0.3s;
+        }
+
+        /* 顾问头像 */
+        .advisor-avatar {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e0e0e0;
+            text-align: center;
+            line-height: 40px;
+            font-size: 14px;
+            color: #666;
+            margin-right: 10px;
+        }
+
+        /* 对话气泡 */
+        .dialog-container {
+            margin: 20px 0;
+        }
+
+        .dialog-bubble {
+            max-width: 80%;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 12px;
+            position: relative;
+        }
+
+        .dialog-bubble.left {
+            background: #e3f2fd;
+            margin-left: 0;
+        }
+
+        .dialog-bubble.right {
+            background: #fff3e0;
+            margin-left: auto;
+        }
+
+        .dialog-bubble .advisor-name {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .dialog-bubble .content {
+            font-size: 14px;
+            color: #333;
+        }
+
+        /* 观点卡片 */
+        .opinion-card {
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+        }
+
+        .opinion-card .advisor-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .opinion-card .advisor-info .name {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .opinion-card .advisor-info .title {
+            color: #666;
+            font-size: 12px;
+        }
+
+        .opinion-card .opinion-text {
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .opinion-card .confidence {
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* 红牌警告 */
+        .red-flag {
+            background: #ffebee;
+            border: 2px solid #f44336;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .red-flag .flag-icon {
+            color: #f44336;
+            font-weight: bold;
+        }
+
+        .red-flag .reason {
+            color: #c62828;
+            margin-top: 5px;
+        }
+
+        /* 张力对 */
+        .tension-pair {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .tension-pair .advisor {
+            text-align: center;
+        }
+
+        .tension-pair .tension-text {
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+        }
+
+        /* 决议部分 */
+        .resolution-box {
+            background: #f8f9fa;
+            border: 2px solid #4caf50;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .resolution-box h4 {
+            color: #2e7d32;
+            margin-bottom: 10px;
+        }
+
+        .resolution-box ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .resolution-box ul li {
+            padding: 5px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .resolution-box ul li:before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #4caf50;
+        }
+
+        /* 风险地图 */
+        .risk-map {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .risk-level {
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .risk-level.low {
+            background: #e8f5e9;
+            border: 1px solid #4caf50;
+        }
+
+        .risk-level.medium {
+            background: #fff8e1;
+            border: 1px solid #ff9800;
+        }
+
+        .risk-level.high {
+            background: #ffebee;
+            border: 1px solid #f44336;
+        }
+
+        .risk-level .level-name {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .risk-level .risks {
+            font-size: 13px;
+        }
+
+        /* 行动建议 */
+        .action-advice {
+            margin: 20px 0;
+        }
+
+        .action-advice .term {
+            margin-bottom: 15px;
+        }
+
+        .action-advice .term h4 {
+            color: #1a1a1a;
+            margin-bottom: 10px;
+        }
+
+        /* 总体判断 */
+        .overall-judgment {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-size: 16px;
+        }
+
+        /* 股票数据 */
+        .stock-data {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .stock-data .data-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .stock-data .data-row:last-child {
+            border-bottom: none;
+        }
+
+        .stock-data .label {
+            color: #666;
+        }
+
+        .stock-data .value {
+            font-weight: bold;
+        }
+
+        /* 页脚 */
+        .footer {
+            text-align: center;
+            padding-top: 30px;
+            border-top: 1px solid #e0e0e0;
+            color: #666;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>投研会报告</h1>
+        <div class="meta">
+            会议ID: {{ meeting_id }} | 生成时间: {{ created_at }}
+        </div>
+    </div>
+
+    <!-- 议题 -->
+    <div class="topic-box">
+        <h2>议题</h2>
+        <div class="topic-text">{{ restated_topic }}</div>
+        <div style="margin-top: 10px; color: #666; font-size: 14px;">
+            类型: {{ topic_type }}
+        </div>
+
+        {% if stock_data %}
+        <div class="stock-data">
+            <h4 style="margin-bottom: 10px;">股票数据</h4>
+            <div class="data-row">
+                <span class="label">名称</span>
+                <span class="value">{{ stock_data.name }}</span>
+            </div>
+            <div class="data-row">
+                <span class="label">当前价格</span>
+                <span class="value">{{ stock_data.price }}</span>
+            </div>
+            <div class="data-row">
+                <span class="label">PE</span>
+                <span class="value">{{ stock_data.PE_TTM }}</span>
+            </div>
+            <div class="data-row">
+                <span class="label">PB</span>
+                <span class="value">{{ stock_data.PB }}</span>
+            </div>
+            <div class="data-row">
+                <span class="label">ROE</span>
+                <span class="value">{{ stock_data.ROE }}%</span>
+            </div>
+            <div class="data-row">
+                <span class="label">市值(亿)</span>
+                <span class="value">{{ stock_data.total_market_value }}</span>
+            </div>
+            <div class="data-row">
+                <span class="label">趋势</span>
+                <span class="value">{{ stock_data.trend }}</span>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Phase 0: 议题接收 -->
+    <div class="accordion">
+        <div class="accordion-item active">
+            <div class="accordion-header">
+                <h3>Phase 0: 议题接收</h3>
+                <span class="phase-tag">复述与分类</span>
+                <span class="arrow">▼</span>
+            </div>
+            <div class="accordion-content">
+                <p><strong>复述问题:</strong> {{ restated_topic }}</p>
+                <p><strong>议题类型:</strong> {{ topic_type }}</p>
+                {% if key_info %}
+                <p><strong>关键信息:</strong></p>
+                <ul>
+                    {% for key, value in key_info.items() %}
+                    <li>{{ key }}: {{ value }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Phase 1: 信息补全 -->
+        {% if questions %}
+        <div class="accordion-item">
+            <div class="accordion-header">
+                <h3>Phase 1: 信息补全</h3>
+                <span class="phase-tag">澄清问题</span>
+                <span class="arrow">▼</span>
+            </div>
+            <div class="accordion-content">
+                <p><strong>澄清问题:</strong></p>
+                <ul>
+                    {% for question in questions %}
+                    <li>{{ question }}</li>
+                    {% endfor %}
+                </ul>
+                {% if user_answers %}
+                <p><strong>用户回答:</strong></p>
+                <ul>
+                    {% for key, value in user_answers.items() %}
+                    <li>{{ key }}: {{ value }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Phase 2: 选席 -->
+        {% if advisors %}
+        <div class="accordion-item">
+            <div class="accordion-header">
+                <h3>Phase 2: 选席</h3>
+                <span class="phase-tag">顾问选择</span>
+                <span class="arrow">▼</span>
+            </div>
+            <div class="accordion-content">
+                <p><strong>参与顾问:</strong> {{ advisors | join(', ') }}</p>
+                {% if tension_pairs %}
+                <p style="margin-top: 15px;"><strong>张力对设计:</strong></p>
+                {% for pair in tension_pairs %}
+                <div class="tension-pair">
+                    <div class="advisor">{{ pair.advisor1 }}</div>
+                    <div class="tension-text">vs<br>{{ pair.tension }}</div>
+                    <div class="advisor">{{ pair.advisor2 }}</div>
+                </div>
+                {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Phase 3: 第一轮发言 -->
+        {% if opinions %}
+        <div class="accordion-item">
+            <div class="accordion-header">
+                <h3>Phase 3: 第一轮发言</h3>
+                <span class="phase-tag">顾问观点</span>
+                <span class="arrow">▼</span>
+            </div>
+            <div class="accordion-content">
+                {% for opinion in opinions %}
+                <div class="opinion-card">
+                    <div class="advisor-info">
+                        <span class="advisor-avatar">{{ opinion.advisor_name[0] }}</span>
+                        <span class="name">{{ opinion.advisor_name }}</span>
+                        {% if opinion.get('confidence') %}
+                        <span class="confidence">置信度: {{ opinion.confidence }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="opinion-text">
+                        <strong>核心观点:</strong> {{ opinion.opinion }}
+                    </div>
+                    {% if opinion.get('reasoning') %}
+                    <div style="font-size: 13px; color: #666; margin-top: 10px;">
+                        {{ opinion.reasoning[:200] }}{% if opinion.reasoning | length > 200 %}...{% endif %}
+                    </div>
+                    {% endif %}
+                    {% if opinion.get('red_flag') %}
+                    <div class="red-flag">
+                        <span class="flag-icon">🚨 红牌警告</span>
+                        <div class="reason">{{ opinion.get('red_flag_reason', '') }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Phase 4: 交锋 -->
+        {% if crossfire_dialogs %}
+        <div class="accordion-item">
+            <div class="accordion-header">
+                <h3>Phase 4: 交锋</h3>
+                <span class="phase-tag">观点碰撞</span>
+                <span class="arrow">▼</span>
+            </div>
+            <div class="accordion-content">
+                {% for dialog in crossfire_dialogs %}
+                <h4 style="margin-bottom: 15px; color: #666;">交锋主题: {{ dialog.topic }}</h4>
+                <div class="dialog-container">
+                    <div class="dialog-bubble left">
+                        <div class="advisor-name">{{ dialog.advisor1 }}</div>
+                        <div class="content">{{ dialog.response1 }}</div>
+                    </div>
+                    <div class="dialog-bubble right">
+                        <div class="advisor-name">{{ dialog.advisor2 }}</div>
+                        <div class="content">{{ dialog.response2 }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Phase 5: 决议 -->
+        {% if resolution %}
+        <div class="accordion-item">
+            <div class="accordion-header">
+                <h3>Phase 5: 决议</h3>
+                <span class="phase-tag">综合结论</span>
+                <span class="arrow">▼</span>
+            </div>
+            <div class="accordion-content">
+                {% if resolution.consensus %}
+                <div class="resolution-box">
+                    <h4>共识</h4>
+                    <ul>
+                        {% for item in resolution.consensus %}
+                        <li>{{ item }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                {% if resolution.divergence %}
+                <div style="background: #fff3e0; border: 1px solid #ff9800; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                    <h4 style="color: #e65100;">分歧</h4>
+                    <ul style="list-style: none;">
+                        {% for item in resolution.divergence %}
+                        <li>• {{ item }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                {% if resolution.risk_map %}
+                <h4 style="margin-bottom: 10px;">风险地图</h4>
+                <div class="risk-map">
+                    <div class="risk-level low">
+                        <div class="level-name">低风险</div>
+                        <div class="risks">
+                            {% for risk in resolution.risk_map.low %}
+                            <div>{{ risk }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="risk-level medium">
+                        <div class="level-name">中风险</div>
+                        <div class="risks">
+                            {% for risk in resolution.risk_map.medium %}
+                            <div>{{ risk }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="risk-level high">
+                        <div class="level-name">高风险</div>
+                        <div class="risks">
+                            {% for risk in resolution.risk_map.high %}
+                            <div>{{ risk }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                {% if resolution.risk_map.red_flag %}
+                <div class="red-flag">
+                    <span class="flag-icon">🚨 红牌警告</span>
+                    <div class="reason">{{ resolution.risk_map.red_flag }}</div>
+                </div>
+                {% endif %}
+                {% endif %}
+
+                {% if resolution.action_advice %}
+                <h4 style="margin-bottom: 10px;">行动建议</h4>
+                <div class="action-advice">
+                    {% if resolution.action_advice.short_term %}
+                    <div class="term">
+                        <h4 style="color: #1976d2;">短期</h4>
+                        <ul style="list-style: none;">
+                            {% for advice in resolution.action_advice.short_term %}
+                            <li>• {{ advice }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                    {% if resolution.action_advice.mid_term %}
+                    <div class="term">
+                        <h4 style="color: #388e3c;">中期</h4>
+                        <ul style="list-style: none;">
+                            {% for advice in resolution.action_advice.mid_term %}
+                            <li>• {{ advice }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                    {% if resolution.action_advice.long_term %}
+                    <div class="term">
+                        <h4 style="color: #7b1fa2;">长期</h4>
+                        <ul style="list-style: none;">
+                            {% for advice in resolution.action_advice.long_term %}
+                            <li>• {{ advice }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                {% if resolution.overall_judgment %}
+                <div class="overall-judgment">
+                    <h4 style="margin-bottom: 10px;">总体判断</h4>
+                    <div>{{ resolution.overall_judgment }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="footer">
+        AlphaMind 投研会 | Powered by AI
+    </div>
+
+    <script>
+        // 手风琴交互
+        document.querySelectorAll('.accordion-header').forEach(header => {
+            header.addEventListener('click', function() {
+                const item = this.parentElement;
+                item.classList.toggle('active');
+            });
+        });
+
+        // 默认展开第一个
+        document.querySelector('.accordion-item').classList.add('active');
+    </script>
+</body>
+</html>
