@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(chmod +x:*)",
+      "Bash(timeout 10 uvicorn app.main:app --port 8000)",
+      "Bash(timeout 15 python -m uvicorn app.main:app --port 8000)",
+      "Bash(timeout 15 /home/shijp/miniconda3/envs/jupyterlab-ext/bin/python:*)",
+      "WebFetch(domain:akshare.akfamily.xyz)",
+      "Bash(curl -s http://127.0.0.1:8000/api/advisors)",
+      "Bash(curl -s http://localhost:8000/api/advisors)",
+      "Bash(pip list:*)",
+      "Bash(python3 -c \"import openai; print\\('OpenAI OK'\\)\")",
+      "Bash(python3 -c \"import fastapi; print\\('FastAPI OK'\\)\")",
+      "Bash(curl:*)",
+      "Bash(kill -9 7153)",
+      "Bash(nohup uvicorn:*)",
+      "Bash(pkill -f \"uvicorn app.main\")",
+      "Bash(kill -9 8820 7154)",
+      "Bash(/home/shijp/miniconda3/envs/jupyterlab-ext/bin/uvicorn app.main:app --reload --port 8000)",
+      "Bash(/home/shijp/miniconda3/envs/jupyterlab-ext/bin/python:*)",
+      "Bash(grep -r '\\\\\"\\\\\"\\\\\"' /mnt/f/workspace/ai/stock/AlphaMind/backend/app/agents/advisors/*.py)",
+      "Bash(python:*)",
+      "Bash(python3:*)",
+      "Bash(/home/shijp/miniconda3/envs/jupyterlab-ext/bin/python3:*)",
+      "Bash(pkill -f \"uvicorn app.main:app\")",
+      "Bash(pkill -f \"uvicorn\")",
+      "Bash(node --check /mnt/f/workspace/ai/stock/AlphaMind/frontend/js/app.js)",
+      "WebFetch(domain:bocha-ai.feishu.cn)",
+      "WebSearch",
+      "Bash(pip3 install:*)",
+      "Bash(git rm:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git config:*)",
+      "Bash(git push:*)"
+    ]
+  }
+}
